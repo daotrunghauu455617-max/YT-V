@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e1014">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="YT Việt">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>YT Việt – YouTube không quảng cáo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/><text x="12" y="16.2" font-size="6.5" font-weight="700" text-anchor="middle" fill="currentColor">10</text></symbol>
+  <symbol id="i-fwd" viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/><text x="12" y="16.2" font-size="6.5" font-weight="700" text-anchor="middle" fill="currentColor">10</text></symbol>
+  <symbol id="i-fs" viewBox="0 0 24 24"><path d="M5 5h5v2H7v3H5zM14 5h5v5h-2V7h-3zM5 14h2v3h3v2H5zM17 14h2v5h-5v-2h3z"/></symbol>
+  <symbol id="i-fsx" viewBox="0 0 24 24"><path d="M9 5v4H5V7h2V5zM15 5h2v2h2v2h-4zM5 15h4v4H7v-2H5zM15 15h4v2h-2v2h-2z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></g></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></g></symbol>
+</svg>
+
+<header class="top">
+  <a class="brand" href="#/" aria-label="Trang chủ"><span class="logo"><svg><use href="#i-play"/></svg></span><span class="brand-t">YT Việt</span></a>
+  <form id="searchForm" class="search" role="search">
+    <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" placeholder="Tìm kiếm hoặc dán link YouTube">
+  </form>
+  <button id="btnSettings" class="icon-btn" aria-label="Cài đặt"><svg><use href="#i-gear"/></svg></button>
+</header>
+
+<main>
+  <section id="viewList">
+    <div id="grid" class="grid"></div>
+    <div id="listMsg" class="msg"></div>
+  </section>
+
+  <section id="viewWatch" class="watch" hidden>
+    <div id="player" class="player ui">
+      <video id="video" playsinline webkit-playsinline preload="auto"></video>
+      <div id="subs" class="subs" aria-live="off"><div><span class="vi"></span></div><div><span class="en"></span></div></div>
+      <div id="badge" class="badge" hidden></div>
+      <div id="spinner" class="spinner" hidden></div>
+      <div id="notice" class="notice" hidden><p id="noticeText"></p><div id="noticeBtns" class="notice-btns"></div></div>
+
+      <div id="ctrl" class="ctrl">
+        <div class="ctrl-mid">
+          <button id="bBack" class="cbtn" aria-label="Tua lại 10 giây"><svg><use href="#i-back"/></svg></button>
+          <button id="bPlay" class="cbtn big" aria-label="Phát / tạm dừng"><svg><use id="useP" href="#i-play"/></svg></button>
+          <button id="bFwd" class="cbtn" aria-label="Tua tới 10 giây"><svg><use href="#i-fwd"/></svg></button>
+        </div>
+        <div class="ctrl-bot">
+          <span id="tCur" class="time">0:00</span>
+          <input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Thanh tua">
+          <span id="tDur" class="time">0:00</span>
+          <button id="bCC" class="cc on" aria-label="Bật/tắt phụ đề tiếng Việt">VI</button>
+          <button id="bOpt" class="cbtn sm" aria-label="Tuỳ chọn trình phát"><svg><use href="#i-sliders"/></svg></button>
+          <button id="bFs" class="cbtn sm" aria-label="Toàn màn hình"><svg><use id="useFs" href="#i-fs"/></svg></button>
+        </div>
+      </div>
+
+      <div id="pmenu" class="pmenu" hidden>
+        <label>Chất lượng <select id="selQ"></select></label>
+        <label>Tốc độ <select id="selSpd">
+          <option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1×</option>
+          <option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
+        <label>Phụ đề gốc <select id="selTrack"></select></label>
+        <label>Cỡ chữ <input id="rngFont" type="range" min="12" max="32" step="1"></label>
+        <label>Độ đậm nền <input id="rngBg" type="range" min="0" max="100" step="5"></label>
+        <label>Lệch giờ phụ đề
+          <span class="stepper"><button id="offM" type="button">−0.5s</button><b id="offV">0s</b><button id="offP" type="button">+0.5s</button></span></label>
+        <label class="chk"><input id="chkEN" type="checkbox"> Hiện thêm dòng tiếng Anh gốc</label>
+        <button id="pmClose" class="btn" type="button">Xong</button>
+      </div>
+    </div>
+
+    <div class="info">
+      <h1 id="title" class="vtitle"></h1>
+      <div id="meta" class="vmeta"></div>
+      <div class="actions">
+        <button id="btnShare" class="chip">Chia sẻ</button>
+        <button id="btnIframe" class="chip">YouTube gốc (có quảng cáo)</button>
+        <button id="btnReload" class="chip">Tải lại</button>
+      </div>
+      <details id="descWrap" class="desc"><summary>Mô tả</summary><div id="desc"></div></details>
+      <h2 class="sep">Video liên quan</h2>
+      <div id="related" class="grid"></div>
+    </div>
+  </section>
+</main>
+
+<div id="sheet" class="sheet" hidden>
+  <div class="panel" role="dialog" aria-label="Cài đặt">
+    <div class="panel-h"><h2>Cài đặt</h2><button id="sheetClose" class="btn ghost">Đóng</button></div>
+
+    <div class="group">
+      <h3>Máy chủ phát không quảng cáo</h3>
+      <p class="hint">Mặc định app tự chọn máy chủ Piped đang hoạt động. Nếu video không tải được, hãy bấm “Kiểm tra” hoặc nhập máy chủ riêng.</p>
+      <input id="instInput" class="txt" type="url" inputmode="url" placeholder="Để trống = tự động (vd: https://pipedapi.kavin.rocks)">
+      <div class="row">
+        <button id="instTest" class="btn">Kiểm tra</button>
+        <button id="instSave" class="btn ghost">Lưu</button>
+      </div>
+      <p id="instMsg" class="hint"></p>
+    </div>
+
+    <div class="group">
+      <h3>Cài app lên màn hình chính</h3>
+      <button id="btnInstall" class="btn" hidden>Cài ứng dụng</button>
+      <p id="installHint" class="hint"></p>
+    </div>
+
+    <div class="group">
+      <h3>Dữ liệu</h3>
+      <button id="btnClear" class="btn ghost">Xoá lịch sử &amp; cài đặt</button>
+    </div>
+
+    <p class="hint small">Không quảng cáo nhờ phát luồng video trực tiếp qua máy chủ Piped thay vì trình phát YouTube. Phụ đề được dịch bằng Google Dịch (dự phòng MyMemory). Xem <b>HUONG_DAN.md</b> để biết giới hạn.</p>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
