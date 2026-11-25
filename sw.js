@@ -1,5 +1,5 @@
 // Service worker: cache "vỏ" ứng dụng để mở nhanh. Tăng số phiên bản khi bạn cập nhật file.
-const V = 'ytviet-v1';
+const V = 'ytviet-v2';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'icon-180.png'];
 

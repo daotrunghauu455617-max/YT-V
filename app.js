@@ -61,46 +61,61 @@ const FALLBACK_INSTANCES = [
   'https://pipedapi.adminforge.de',
   'https://pipedapi.reallyaweso.me',
   'https://pipedapi.darkness.services',
-  'https://pipedapi.leptons.xyz'
+  'https://pipedapi.leptons.xyz',
+  'https://piped-api.garudalinux.org',
+  'https://pipedapi.nosebs.ru',
+  'https://pipedapi.r4fo.com',
+  'https://api.piped.yt',
+  'https://pipedapi.orangenet.cc',
+  'https://pipedapi.ngn.tf',
+  'https://pipedapi.drgns.space',
+  'https://pipedapi.owo.si'
 ];
-let instPromise = null;
-function loadInstances(force) {
-  if (S.instance) return Promise.resolve([S.instance.replace(/\/+$/, '')]);
-  const c = store.get('instCache', null);
-  if (!force && c && c.list && c.list.length && Date.now() - c.t < 6 * 3600e3) return Promise.resolve(c.list);
-  if (instPromise && !force) return instPromise;
-  instPromise = (async () => {
-    let remote = [];
+// Lấy danh sách NGAY (cache hoặc danh sách có sẵn), cập nhật danh sách mới ở nền -> không chờ.
+function refreshInstances() {
+  return (async () => {
     try {
       const r = await fetchT('https://piped-instances.kavin.rocks/', {}, 6000);
       const j = await r.json();
-      remote = j.filter(i => i && i.api_url && i.uptime_24h !== 0)
+      const remote = j.filter(i => i && i.api_url && i.uptime_24h !== 0)
         .sort((a, b) => (b.uptime_24h || 0) - (a.uptime_24h || 0))
-        .map(i => i.api_url.replace(/\/+$/, '')).slice(0, 8);
+        .map(i => i.api_url.replace(/\/+$/, '')).slice(0, 10);
+      if (remote.length) store.set('instCache', { t: Date.now(), list: [...new Set([...remote, ...FALLBACK_INSTANCES])] });
     } catch {}
-    const list = [...new Set([...remote, ...FALLBACK_INSTANCES])];
-    if (remote.length) store.set('instCache', { t: Date.now(), list });
-    return list;
-  })().finally(() => { instPromise = null; });
-  return instPromise;
+  })();
 }
+async function loadInstances(force) {
+  if (S.instance) return [S.instance.replace(/\/+$/, '')];
+  const c = store.get('instCache', null);
+  if (force) await refreshInstances();
+  else if (!c || Date.now() - c.t > 6 * 3600e3) refreshInstances();
+  const c2 = store.get('instCache', null);
+  return c2 && c2.list && c2.list.length ? c2.list : FALLBACK_INSTANCES;
+}
+// Hỏi nhiều máy chủ cùng lúc, lấy máy trả lời đầu tiên.
 async function apiX(path, skip = []) {
   const list = await loadInstances();
   const good = store.get('goodInst', '');
-  let order = good && list.includes(good) ? [good, ...list.filter(x => x !== good)] : list;
-  order = order.filter(b => !skip.includes(b));
-  let lastErr = new Error('Không có máy chủ');
-  for (const base of order.slice(0, 7)) {
-    try {
-      const r = await fetchT(base + path, {}, 9000);
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const j = await r.json();
-      if (j && j.error) throw new Error(j.message || j.error);
-      store.set('goodInst', base);
-      return { j, base };
-    } catch (e) { lastErr = e; }
-  }
-  throw lastErr;
+  const order = (good && list.includes(good) ? [good, ...list.filter(x => x !== good)] : list)
+    .filter(b => !skip.includes(b)).slice(0, 10);
+  if (!order.length) throw new Error('Không còn máy chủ để thử');
+  const acs = [];
+  return new Promise((resolve, reject) => {
+    let left = order.length, last = new Error('Không có máy chủ');
+    order.forEach(base => {
+      const ac = new AbortController(); acs.push(ac);
+      const t = setTimeout(() => ac.abort(), 7000);
+      fetch(base + path, { signal: ac.signal })
+        .then(async r => {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const j = await r.json();
+          if (j && j.error) throw new Error(j.message || j.error);
+          return j;
+        })
+        .then(j => { clearTimeout(t); store.set('goodInst', base); acs.forEach(a => a !== ac && a.abort()); resolve({ j, base }); })
+        .catch(e => { clearTimeout(t); last = e; if (--left === 0) reject(last); });
+    });
+  });
 }
 const api = async (p, skip) => (await apiX(p, skip)).j;
 
@@ -332,7 +347,7 @@ function useIframe(w) {
   video.pause(); video.hidden = true; notice.hidden = true; setSpinner(false);
   const f = document.createElement('iframe');
   f.className = 'yt';
-  f.src = `https://www.youtube-nocookie.com/embed/${w.id}?autoplay=1&playsinline=1&rel=0&hl=vi&cc_load_policy=1`;
+  f.src = `https://www.youtube-nocookie.com/embed/${w.id}?autoplay=1&playsinline=1&rel=0&hl=vi&cc_lang_pref=vi&cc_load_policy=1`;
   f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; f.allowFullscreen = true;
   player.append(f); player.classList.add('iframe'); w.iframe = true;
 }
@@ -672,16 +687,14 @@ $('#instSave').onclick = () => {
 $('#instTest').onclick = async () => {
   instMsg.textContent = 'Đang kiểm tra…';
   const typed = instInput.value.trim().replace(/\/+$/, '');
-  try {
-    if (typed) {
-      const r = await fetchT(typed + '/trending?region=VN', {}, 9000);
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      await r.json(); instMsg.textContent = '✔ Máy chủ hoạt động: ' + typed;
-    } else {
-      store.del('instCache'); store.del('goodInst'); await loadInstances(true);
-      const { base } = await apiX('/trending?region=VN'); instMsg.textContent = '✔ Đã chọn máy chủ: ' + base;
-    }
-  } catch (e) { instMsg.textContent = '✖ Không kết nối được (' + (e.message || 'lỗi') + '). Thử máy chủ khác.'; }
+  const list = typed ? [typed] : [...new Set([...(await loadInstances(true)), ...FALLBACK_INSTANCES])];
+  const res = await Promise.all(list.map(async b => {
+    try { const r = await fetchT(b + '/trending?region=VN', {}, 7000); if (!r.ok) throw 0; await r.json(); return b; } catch { return null; }
+  }));
+  const ok = res.filter(Boolean);
+  instMsg.textContent = ok.length ? `✔ ${ok.length}/${list.length} máy chủ hoạt động: ` + ok.join(', ')
+    : `✖ Cả ${list.length} máy chủ đều không phản hồi (YouTube đang chặn hoặc mạng lỗi). Xem phần “Nếu app không phát được” trong hướng dẫn.`;
+  if (ok.length && !typed) store.set('goodInst', ok[0]);
 };
 $('#btnClear').onclick = () => {
   if (!confirm('Xoá lịch sử xem và đặt lại cài đặt?')) return;
